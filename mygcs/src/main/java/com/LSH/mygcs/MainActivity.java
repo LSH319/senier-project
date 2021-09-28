@@ -1,10 +1,12 @@
 package com.LSH.mygcs;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v4.app.FragmentManager;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -45,6 +47,7 @@ import com.o3dr.services.android.lib.drone.property.Altitude;
 import com.o3dr.services.android.lib.drone.property.Attitude;
 import com.o3dr.services.android.lib.drone.property.Battery;
 import com.o3dr.services.android.lib.drone.property.Gps;
+import com.o3dr.services.android.lib.drone.property.GuidedState;
 import com.o3dr.services.android.lib.drone.property.Speed;
 import com.o3dr.services.android.lib.drone.property.State;
 import com.o3dr.services.android.lib.drone.property.Type;
@@ -86,8 +89,7 @@ public class MainActivity extends AppCompatActivity implements DroneListener, To
     private double mAltitude = 3.0;
     private static final int DEFAULT_UDP_PORT = 14550;
     private static final int DEFAULT_USB_BAUD_RATE = 57600;
-
-    private ArrayList<Marker> Marker_list = new ArrayList<Marker>();
+    private Marker targetAdress = new Marker();
     //private Spinner modeSelector;
 
     Handler mainHandler;
@@ -408,6 +410,25 @@ public class MainActivity extends AppCompatActivity implements DroneListener, To
         LatLong position = new LatLong(gps.getPosition());
         dronePosition.setPosition(new LatLng(position.getLatitude(),position.getLongitude()));
         dronePosition.setMap(mNaverMap);
+
+        if(CheckGoal(new LatLng(position.getLatitude(),position.getLongitude()))){
+            VehicleApi.getApi(drone).setVehicleMode(VehicleMode.COPTER_LOITER,
+                    new AbstractCommandListener() {
+                        @Override
+                        public void onSuccess() {
+                        }
+
+                        @Override
+                        public void onError(int i) {
+
+                        }
+
+                        @Override
+                        public void onTimeout() {
+
+                        }
+                    });
+        }
         //mLocationOverlay.setPosition(new LatLng(position.getLatitude(), position.getLongitude()));
     }
 
@@ -453,6 +474,60 @@ public class MainActivity extends AppCompatActivity implements DroneListener, To
         if(mAltitude > 3.0) this.mAltitude = mAltitude - 0.5;
         TextView altitude = (TextView) findViewById(R.id.altitudeValue);
         altitude.setText(mAltitude + "M");
+    }
+
+    public void GuidedFly(View view) {
+        State vehicleState = this.drone.getAttribute(AttributeType.STATE);
+        final LatLong point = new LatLong(targetAdress.getPosition().latitude,targetAdress.getPosition().longitude);
+        if (vehicleState.isFlying()) {
+            State vehiclemode = drone.getAttribute(AttributeType.STATE);
+            VehicleMode dronemode = vehiclemode.getVehicleMode();
+            if(dronemode != VehicleMode.COPTER_GUIDED) {
+                AlertDialog.Builder alt_bld = new AlertDialog.Builder(this);
+                alt_bld.setMessage("확인하시면 가이드모드로 전환후 기체가 이동합니다.").setCancelable(false).setPositiveButton("확인", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        // Action for 'Yes' Button
+                        VehicleApi.getApi(drone).setVehicleMode(VehicleMode.COPTER_GUIDED,
+                                new AbstractCommandListener() {
+                                    @Override
+                                    public void onSuccess() {
+                                        ControlApi.getApi(drone).goTo(point, true, null);
+                                    }
+
+                                    @Override
+                                    public void onError(int i) {
+
+                                    }
+
+                                    @Override
+                                    public void onTimeout() {
+
+                                    }
+                                });
+                    }
+                }).setNegativeButton("취소", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.cancel();
+                    }
+                });
+                AlertDialog alert = alt_bld.create();
+                // Title for AlertDialog
+                alert.setTitle("가이드 비행");
+                // Icon for AlertDialog
+                //alert.setIcon(R.drawable.drone);
+                alert.show();
+            }
+            else {
+                ControlApi.getApi(drone).goTo(point, true, null);
+            }
+        }
+    }
+
+    public boolean CheckGoal(LatLng recentLatLng) {
+        GuidedState guidedState = drone.getAttribute(AttributeType.GUIDED_STATE);
+        LatLng target = new LatLng(guidedState.getCoordinate().getLatitude(),
+                guidedState.getCoordinate().getLongitude());
+        return target.distanceTo(recentLatLng) <= 1;
     }
 
     // Helper methods
@@ -531,9 +606,8 @@ public class MainActivity extends AppCompatActivity implements DroneListener, To
                 double latitude,longitude;
                 longitude = latlng.getDouble("x");
                 latitude = latlng.getDouble("y");
-                Marker_list.add(new Marker(new LatLng(latitude, longitude)));
-                Marker_list.get(Marker_list.size()-1).setPosition(new LatLng(latitude, longitude));
-                Marker_list.get(Marker_list.size()-1).setMap(mNaverMap);
+                targetAdress.setPosition(new LatLng(latitude,longitude));
+                targetAdress.setMap(mNaverMap);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
