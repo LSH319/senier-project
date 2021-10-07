@@ -1,14 +1,19 @@
 package com.LSH.mygcs;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.telephony.SmsManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
@@ -75,6 +80,7 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity implements DroneListener, TowerListener, LinkListener, OnMapReadyCallback {
 
     private static final String TAG = MainActivity.class.getSimpleName();
+    private final int MY_PERMISSION_REQUEST_SMS = 1001;
     private NaverMap mNaverMap;
     private MapFragment mMapFragment;
     private LocationOverlay mLocationOverlay;
@@ -129,6 +135,40 @@ public class MainActivity extends AppCompatActivity implements DroneListener, To
         });
 
         mainHandler = new Handler(getApplicationContext().getMainLooper());
+
+        if(ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED){
+            if(ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.SEND_SMS)){
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setTitle("info");
+                builder.setMessage("This app won't work properly unless you grant SMS permission");
+
+                builder.setNeutralButton("OK",new DialogInterface.OnClickListener(){
+                   @Override
+                   public void onClick(DialogInterface dialog, int which){
+                       ActivityCompat.requestPermissions(MainActivity.this,new String[] {Manifest.permission.SEND_SMS}, MY_PERMISSION_REQUEST_SMS);
+                   }
+                });
+
+                AlertDialog dialog = builder.create();
+                dialog.show();
+            }
+            else {
+                ActivityCompat.requestPermissions(this,new String[] {Manifest.permission.SEND_SMS}, MY_PERMISSION_REQUEST_SMS);
+            }
+        }
+
+        Button BTN = (Button)findViewById(R.id.SMS);
+        BTN.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                SendSMS("01000000000","123");
+            }
+        });
+    }
+
+    private void SendSMS(String number,String msg){
+        SmsManager sms = SmsManager.getDefault();
+        sms.sendTextMessage(number,null,msg,null,null);
     }
 
     @Override
@@ -466,19 +506,22 @@ public class MainActivity extends AppCompatActivity implements DroneListener, To
 
     public void addAltitude(View view){
         if(mAltitude < 10.0) this.mAltitude = mAltitude + 0.5;
-        TextView altitude = (TextView) findViewById(R.id.altitudeValue);
+        Button altitude = (Button) findViewById(R.id.AltitudeBTN);
         altitude.setText(mAltitude + "M");
     }
 
     public void subAltitude(View view){
         if(mAltitude > 3.0) this.mAltitude = mAltitude - 0.5;
-        TextView altitude = (TextView) findViewById(R.id.altitudeValue);
+        Button altitude = (Button) findViewById(R.id.AltitudeBTN);
         altitude.setText(mAltitude + "M");
     }
 
-    public void GuidedFly(View view) {
+    public void GuidedFly(View view){
+        GotoPoint(new LatLong(targetAdress.getPosition().latitude,targetAdress.getPosition().longitude));
+    }
+
+    protected void GotoPoint(final LatLong point) {
         State vehicleState = this.drone.getAttribute(AttributeType.STATE);
-        final LatLong point = new LatLong(targetAdress.getPosition().latitude,targetAdress.getPosition().longitude);
         if (vehicleState.isFlying()) {
             State vehiclemode = drone.getAttribute(AttributeType.STATE);
             VehicleMode dronemode = vehiclemode.getVehicleMode();

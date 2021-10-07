@@ -198,23 +198,12 @@
         app:layout_constraintEnd_toEndOf="@+id/map"
         app:layout_constraintTop_toBottomOf="@+id/DroneState">
 
-        <TextView
-            android:id="@+id/altitudeText"
-            android:layout_width="match_parent"
+        <Button
+            android:id="@+id/AltitudeBTN"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@color/cardview_dark_background"
-            android:gravity="center"
-            android:text="이륙고도"
-            android:textSize="16sp" />
-
-        <TextView
-            android:id="@+id/altitudeValue"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@color/cardview_dark_background"
-            android:gravity="center"
-            android:text="3.0M"
-            android:textSize="20sp" />
+            android:text="3.0m"
+            android:textSize="20sp"/>
 
         <Button
             android:id="@+id/addAltitude"
@@ -264,5 +253,14 @@
         android:text="Fly"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toEndOf="@+id/ARMBtn" />
+
+    <Button
+        android:id="@+id/SMS"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="SMSTest"
+        android:text="SMSTest"
+        app:layout_constraintBottom_toTopOf="@+id/ARMBtn"
+        app:layout_constraintStart_toStartOf="parent" />
 
 </android.support.constraint.ConstraintLayout>
