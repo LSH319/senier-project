@@ -193,7 +193,7 @@
     <LinearLayout
         android:id="@+id/aboutAltitude"
         android:layout_width="89dp"
-        android:layout_height="162dp"
+        android:layout_height="200dp"
         android:orientation="vertical"
         app:layout_constraintEnd_toEndOf="@+id/map"
         app:layout_constraintTop_toBottomOf="@+id/DroneState">
@@ -202,8 +202,9 @@
             android:id="@+id/AltitudeBTN"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:onClick="AltitudeBTNTap"
             android:text="3.0m"
-            android:textSize="20sp"/>
+            android:textSize="20sp" />
 
         <Button
             android:id="@+id/addAltitude"
@@ -219,6 +220,14 @@
             android:layout_height="wrap_content"
             android:onClick="subAltitude"
             android:text="- 0.5M"
+            android:textSize="20sp" />
+
+        <Button
+            android:id="@+id/AltitudeOK"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:onClick="AltitudeOKBTNTap"
+            android:text="OK"
             android:textSize="20sp" />
     </LinearLayout>
 
@@ -258,9 +267,45 @@
         android:id="@+id/SMS"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:onClick="SMSTest"
         android:text="SMSTest"
         app:layout_constraintBottom_toTopOf="@+id/ARMBtn"
         app:layout_constraintStart_toStartOf="parent" />
+
+    <android.support.design.widget.TextInputLayout
+        android:id="@+id/number"
+        android:layout_width="138dp"
+        android:layout_height="44dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textInputLayout">
+
+        <android.support.design.widget.TextInputEditText
+            android:id="@+id/numbertext"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Phonenumber" />
+    </android.support.design.widget.TextInputLayout>
+
+    <android.support.design.widget.TextInputLayout
+        android:id="@+id/SMSS"
+        android:layout_width="138dp"
+        android:layout_height="44dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/number">
+
+        <android.support.design.widget.TextInputEditText
+            android:id="@+id/SMStext"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Message" />
+    </android.support.design.widget.TextInputLayout>
+
+    <Button
+        android:id="@+id/returnHome"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="ReturnHome"
+        android:text="Return"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/GuidedFly" />
 
 </android.support.constraint.ConstraintLayout>

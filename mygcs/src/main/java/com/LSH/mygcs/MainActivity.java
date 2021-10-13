@@ -7,6 +7,7 @@ import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.support.annotation.NonNull;
+import android.support.design.widget.TextInputEditText;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.content.ContextCompat;
@@ -32,7 +33,6 @@ import com.naver.maps.map.OnMapReadyCallback;
 import com.naver.maps.map.UiSettings;
 import com.naver.maps.map.overlay.LocationOverlay;
 import com.naver.maps.map.overlay.Marker;
-import com.naver.maps.map.overlay.OverlayImage;
 import com.naver.maps.map.util.FusedLocationSource;
 import com.o3dr.android.client.ControlTower;
 import com.o3dr.android.client.Drone;
@@ -47,7 +47,6 @@ import com.o3dr.services.android.lib.drone.attribute.AttributeType;
 import com.o3dr.services.android.lib.drone.companion.solo.SoloAttributes;
 import com.o3dr.services.android.lib.drone.companion.solo.SoloState;
 import com.o3dr.services.android.lib.drone.connection.ConnectionParameter;
-import com.o3dr.services.android.lib.drone.mission.item.command.YawCondition;
 import com.o3dr.services.android.lib.drone.property.Altitude;
 import com.o3dr.services.android.lib.drone.property.Attitude;
 import com.o3dr.services.android.lib.drone.property.Battery;
@@ -73,8 +72,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.text.AttributedCharacterIterator;
-import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements DroneListener, TowerListener, LinkListener, OnMapReadyCallback {
@@ -96,6 +93,8 @@ public class MainActivity extends AppCompatActivity implements DroneListener, To
     private static final int DEFAULT_UDP_PORT = 14550;
     private static final int DEFAULT_USB_BAUD_RATE = 57600;
     private Marker targetAdress = new Marker();
+    private Marker homeposition = new Marker();
+    private Boolean goal = false;
     //private Spinner modeSelector;
 
     Handler mainHandler;
@@ -157,11 +156,14 @@ public class MainActivity extends AppCompatActivity implements DroneListener, To
             }
         }
 
+
         Button BTN = (Button)findViewById(R.id.SMS);
         BTN.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                SendSMS("01000000000","123");
+                final EditText num = (EditText)findViewById(R.id.numbertext);
+                final EditText msg = (EditText)findViewById(R.id.SMStext);
+                SendSMS(num.getText().toString(),msg.getText().toString());
             }
         });
     }
@@ -169,6 +171,20 @@ public class MainActivity extends AppCompatActivity implements DroneListener, To
     private void SendSMS(String number,String msg){
         SmsManager sms = SmsManager.getDefault();
         sms.sendTextMessage(number,null,msg,null,null);
+    }
+
+    public void ReturnHome(View view){
+        homeposition.setPosition(new LatLng(locationSource.getLastLocation().getLatitude(),locationSource.getLastLocation().getLongitude()));
+        homeposition.setMap(mNaverMap);
+        GotoPoint(new LatLong(homeposition.getPosition().latitude,homeposition.getPosition().longitude));
+    }
+
+    public void AltitudeBTNTap(View view){
+        doBtnVisible("addAltitude","subAltitude","AltitudeOK");
+    }
+
+    public void AltitudeOKBTNTap(View view){
+        doBtnInvisible("addAltitude","subAltitude","AltitudeOK");
     }
 
     @Override
@@ -347,11 +363,7 @@ public class MainActivity extends AppCompatActivity implements DroneListener, To
 
         if (vehicleState.isFlying()) {
             // Land
-            VehicleApi.getApi(this.drone).setVehicleMode(VehicleMode.COPTER_LAND, new SimpleCommandListener() {
-                @Override
-                public void onError(int executionError) {
-                    alertUser("Unable to land the vehicle.");
-                }
+
 
                 @Override
                 public void onTimeout() {
@@ -451,6 +463,26 @@ public class MainActivity extends AppCompatActivity implements DroneListener, To
         dronePosition.setPosition(new LatLng(position.getLatitude(),position.getLongitude()));
         dronePosition.setMap(mNaverMap);
 
+        if(CheckGoal(new LatLng(position.getLatitude(),position.getLongitude()))&&goal){
+            goal = false;
+            VehicleApi.getApi(drone).setVehicleMode(VehicleMode.COPTER_LOITER,
+                    new AbstractCommandListener() {
+                        @Override
+                        public void onSuccess() {
+                        }
+
+                        @Override
+                        public void onError(int i) {
+
+                        }
+
+                        @Override
+                        public void onTimeout() {
+
+                        }
+                    });
+        }
+
         if(CheckGoal(new LatLng(position.getLatitude(),position.getLongitude()))){
             VehicleApi.getApi(drone).setVehicleMode(VehicleMode.COPTER_LOITER,
                     new AbstractCommandListener() {
@@ -525,6 +557,7 @@ public class MainActivity extends AppCompatActivity implements DroneListener, To
         if (vehicleState.isFlying()) {
             State vehiclemode = drone.getAttribute(AttributeType.STATE);
             VehicleMode dronemode = vehiclemode.getVehicleMode();
+            goal = true;
             if(dronemode != VehicleMode.COPTER_GUIDED) {
                 AlertDialog.Builder alt_bld = new AlertDialog.Builder(this);
                 alt_bld.setMessage("확인하시면 가이드모드로 전환후 기체가 이동합니다.").setCancelable(false).setPositiveButton("확인", new DialogInterface.OnClickListener() {
@@ -595,6 +628,20 @@ public class MainActivity extends AppCompatActivity implements DroneListener, To
                 geocode.execute(text.getText().toString());
             }
         });
+    }
+
+    protected void doBtnVisible(String...strings){
+        for(int i =0; i<strings.length; i++){
+            Button button = findViewById(getResources().getIdentifier(strings[i], "id", "com.LSH.mygcs"));
+            button.setVisibility(View.VISIBLE);
+        }
+    }
+
+    protected void doBtnInvisible(String...strings){
+        for(int i =0; i<strings.length; i++){
+            Button button = findViewById(getResources().getIdentifier(strings[i], "id", "com.LSH.mygcs"));
+            button.setVisibility(View.INVISIBLE);
+        }
     }
 
     private class geocoder extends AsyncTask<String, Void, JSONArray> {
