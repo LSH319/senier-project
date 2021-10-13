@@ -363,7 +363,15 @@ public class MainActivity extends AppCompatActivity implements DroneListener, To
 
         if (vehicleState.isFlying()) {
             // Land
-
+            VehicleApi.getApi(this.drone).setVehicleMode(VehicleMode.COPTER_LAND, new SimpleCommandListener() {
+                @Override
+                public void onSuccess() {
+                    alertUser("land the vehicle.");
+                }
+                @Override
+                public void onError(int executionError) {
+                    alertUser("Unable to land the vehicle.");
+                }
 
                 @Override
                 public void onTimeout() {
@@ -465,6 +473,7 @@ public class MainActivity extends AppCompatActivity implements DroneListener, To
 
         if(CheckGoal(new LatLng(position.getLatitude(),position.getLongitude()))&&goal){
             goal = false;
+
             VehicleApi.getApi(drone).setVehicleMode(VehicleMode.COPTER_LOITER,
                     new AbstractCommandListener() {
                         @Override
