@@ -465,15 +465,9 @@ public class MainActivity extends AppCompatActivity implements DroneListener, To
         if(CheckGoal(new LatLng(position.getLatitude(),position.getLongitude()))&&goal){
             goal = false;
             if(!returnHome){
-                Button BTN = (Button)findViewById(R.id.SMS);
-                BTN.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        final EditText num = (EditText)findViewById(R.id.numbertext);
-                        final EditText msg = (EditText)findViewById(R.id.SMStext);
-                        SendSMS(num.getText().toString(),msg.getText().toString());
-                    }
-                });
+                final EditText num = (EditText)findViewById(R.id.numbertext);
+                final EditText msg = (EditText)findViewById(R.id.SMStext);
+                SendSMS(num.getText().toString(),msg.getText().toString());
             }
             VehicleApi.getApi(this.drone).setVehicleMode(VehicleMode.COPTER_LAND, new SimpleCommandListener() {
                 @Override
@@ -490,25 +484,6 @@ public class MainActivity extends AppCompatActivity implements DroneListener, To
                     alertUser("Unable to land the vehicle.");
                 }
             });
-        }
-
-        if(CheckGoal(new LatLng(position.getLatitude(),position.getLongitude()))){
-            VehicleApi.getApi(drone).setVehicleMode(VehicleMode.COPTER_LOITER,
-                    new AbstractCommandListener() {
-                        @Override
-                        public void onSuccess() {
-                        }
-
-                        @Override
-                        public void onError(int i) {
-
-                        }
-
-                        @Override
-                        public void onTimeout() {
-
-                        }
-                    });
         }
         //mLocationOverlay.setPosition(new LatLng(position.getLatitude(), position.getLongitude()));
     }
