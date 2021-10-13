@@ -95,6 +95,7 @@ public class MainActivity extends AppCompatActivity implements DroneListener, To
     private Marker targetAdress = new Marker();
     private Marker homeposition = new Marker();
     private Boolean goal = false;
+    private Boolean returnHome = false;
     //private Spinner modeSelector;
 
     Handler mainHandler;
@@ -155,17 +156,6 @@ public class MainActivity extends AppCompatActivity implements DroneListener, To
                 ActivityCompat.requestPermissions(this,new String[] {Manifest.permission.SEND_SMS}, MY_PERMISSION_REQUEST_SMS);
             }
         }
-
-
-        Button BTN = (Button)findViewById(R.id.SMS);
-        BTN.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                final EditText num = (EditText)findViewById(R.id.numbertext);
-                final EditText msg = (EditText)findViewById(R.id.SMStext);
-                SendSMS(num.getText().toString(),msg.getText().toString());
-            }
-        });
     }
 
     private void SendSMS(String number,String msg){
@@ -174,6 +164,7 @@ public class MainActivity extends AppCompatActivity implements DroneListener, To
     }
 
     public void ReturnHome(View view){
+        returnHome = true;
         homeposition.setPosition(new LatLng(locationSource.getLastLocation().getLatitude(),locationSource.getLastLocation().getLongitude()));
         homeposition.setMap(mNaverMap);
         GotoPoint(new LatLong(homeposition.getPosition().latitude,homeposition.getPosition().longitude));
@@ -473,23 +464,32 @@ public class MainActivity extends AppCompatActivity implements DroneListener, To
 
         if(CheckGoal(new LatLng(position.getLatitude(),position.getLongitude()))&&goal){
             goal = false;
+            if(!returnHome){
+                Button BTN = (Button)findViewById(R.id.SMS);
+                BTN.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        final EditText num = (EditText)findViewById(R.id.numbertext);
+                        final EditText msg = (EditText)findViewById(R.id.SMStext);
+                        SendSMS(num.getText().toString(),msg.getText().toString());
+                    }
+                });
+            }
+            VehicleApi.getApi(this.drone).setVehicleMode(VehicleMode.COPTER_LAND, new SimpleCommandListener() {
+                @Override
+                public void onSuccess() {
+                    alertUser("land the vehicle.");
+                }
+                @Override
+                public void onError(int executionError) {
+                    alertUser("Unable to land the vehicle.");
+                }
 
-            VehicleApi.getApi(drone).setVehicleMode(VehicleMode.COPTER_LOITER,
-                    new AbstractCommandListener() {
-                        @Override
-                        public void onSuccess() {
-                        }
-
-                        @Override
-                        public void onError(int i) {
-
-                        }
-
-                        @Override
-                        public void onTimeout() {
-
-                        }
-                    });
+                @Override
+                public void onTimeout() {
+                    alertUser("Unable to land the vehicle.");
+                }
+            });
         }
 
         if(CheckGoal(new LatLng(position.getLatitude(),position.getLongitude()))){
@@ -559,6 +559,7 @@ public class MainActivity extends AppCompatActivity implements DroneListener, To
 
     public void GuidedFly(View view){
         GotoPoint(new LatLong(targetAdress.getPosition().latitude,targetAdress.getPosition().longitude));
+        returnHome = false;
     }
 
     protected void GotoPoint(final LatLong point) {
