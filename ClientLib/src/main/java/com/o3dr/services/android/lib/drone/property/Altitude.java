@@ -11,6 +11,10 @@ public class Altitude implements DroneAttribute {
     private double altitude;
     private double targetAltitude;
 
+    // 상대고도값 2021-07-20 추가
+    private double absolute_altitude;
+    private double relative_altitude;
+
     public Altitude(){}
 
     public Altitude(double altitude, double targetAltitude) {
@@ -18,15 +22,29 @@ public class Altitude implements DroneAttribute {
         this.targetAltitude = targetAltitude;
     }
 
+    // 상대고도값 2021-07-20 추가
+    public double getAbsoluteAltitude() {
+        return absolute_altitude;
+    }
+
+    public double getRelativeAltitude() {
+        return relative_altitude;
+    }
+
     public double getAltitude() {
-        return altitude;
+        return relative_altitude; // 상대고도값 2021-07-20 추가
+        //return altitude;
     }
 
     public double getTargetAltitude() {
         return targetAltitude;
     }
 
-    public void setAltitude(double altitude) {
+    public void setAltitudeAbsoluteAndRelative(double absAlt, double relativeAlt) {
+        this.absolute_altitude = absAlt;
+    }
+
+        public void setAltitude(double altitude) {
         this.altitude = altitude;
     }
 
