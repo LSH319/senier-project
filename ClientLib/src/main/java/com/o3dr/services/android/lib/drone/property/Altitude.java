@@ -42,6 +42,7 @@ public class Altitude implements DroneAttribute {
 
     public void setAltitudeAbsoluteAndRelative(double absAlt, double relativeAlt) {
         this.absolute_altitude = absAlt;
+        this.relative_altitude = relativeAlt;
     }
 
         public void setAltitude(double altitude) {
